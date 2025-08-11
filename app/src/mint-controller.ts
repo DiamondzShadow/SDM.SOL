@@ -5,6 +5,7 @@ import { TOKEN_PROGRAM_ID, createMint } from "@solana/spl-token"
 import type { MintController } from "./types"
 
 export class SDMMintController {
+  private static readonly MINT_MESSAGE_PREFIX = "SDMINT"
   private program: Program<MintController>
   private configPDA: PublicKey
   private mintAuthorityPDA: PublicKey
@@ -88,7 +89,7 @@ export class SDMMintController {
 
   private createMintMessage(amount: anchor.BN, recipient: PublicKey, nonce: anchor.BN, reason: string): Uint8Array {
     const message = Buffer.concat([
-      Buffer.from("SDMINT", "utf8"), // Protocol identifier to match on-chain logic
+      Buffer.from(SDMMintController.MINT_MESSAGE_PREFIX, "utf8"), // Protocol identifier to match on-chain logic
       amount.toBuffer("le", 8),
       recipient.toBuffer(),
       nonce.toBuffer("le", 8),
