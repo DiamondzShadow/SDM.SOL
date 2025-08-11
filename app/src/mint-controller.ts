@@ -88,6 +88,7 @@ export class SDMMintController {
 
   private createMintMessage(amount: anchor.BN, recipient: PublicKey, nonce: anchor.BN, reason: string): Uint8Array {
     const message = Buffer.concat([
+      Buffer.from("SDMINT", "utf8"), // Protocol identifier to match on-chain logic
       amount.toBuffer("le", 8),
       recipient.toBuffer(),
       nonce.toBuffer("le", 8),
