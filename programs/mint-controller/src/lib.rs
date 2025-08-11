@@ -225,76 +225,45 @@ fn create_mint_message(amount: u64, recipient: Pubkey, nonce: u64, reason: &str)
 }
 
 fn parse_and_verify_ed25519_instruction(ix: &Instruction, expected_message: &[u8]) -> Result<Option<Pubkey>> {
-    // Ed25519 instruction format validation
-    if ix.data.len() < 112 {  // Minimum size: 1 + 1 + 2 + 32 + 64 + 2 + message_len
+    // The ed25519 instruction data is structured as a header containing offsets,
+    // followed by the data (public key, signature, message).
+    const HEADER_SIZE: usize = 16;
+    if ix.data.len() < HEADER_SIZE {
         return Ok(None);
     }
-    
-    let mut offset = 0;
-    
-    // Read num_signatures (should be 1)
-    let num_signatures = ix.data[offset];
-    offset += 1;
+
+    let num_signatures = ix.data[0];
     if num_signatures != 1 {
+        // This function only supports single-signature instructions.
         return Ok(None);
     }
+
+    // Offsets are u16 little-endian values.
+    let public_key_offset = u16::from_le_bytes([ix.data[6], ix.data[7]]) as usize;
+    let message_data_offset = u16::from_le_bytes([ix.data[10], ix.data[11]]) as usize;
+    let message_data_size = u16::from_le_bytes([ix.data[12], ix.data[13]]) as usize;
     
-    // Read padding
-    let _padding = ix.data[offset];
-    offset += 1;
-    
-    // Read signature_offset (should point to after the header)
-    let signature_offset = u16::from_le_bytes([ix.data[offset], ix.data[offset + 1]]) as usize;
-    offset += 2;
-    
-    // Read public key (32 bytes)
-    if offset + 32 > ix.data.len() {
-        return Ok(None);
+    // Basic validation of offsets and sizes
+    if public_key_offset < HEADER_SIZE || message_data_offset < HEADER_SIZE {
+        return Err(error!(CustomError::InvalidSignature));
     }
-    let pubkey_bytes: [u8; 32] = ix.data[offset..offset + 32].try_into().map_err(|_| CustomError::InvalidSignature)?;
-    let pubkey = Pubkey::new_from_array(pubkey_bytes);
-    offset += 32;
-    
-    // Read signature (64 bytes)
-    if offset + 64 > ix.data.len() {
-        return Ok(None);
+    if public_key_offset.saturating_add(32) > ix.data.len() || message_data_offset.saturating_add(message_data_size) > ix.data.len() {
+        return Err(error!(CustomError::InvalidSignature));
     }
-    let _signature: [u8; 64] = ix.data[offset..offset + 64].try_into().map_err(|_| CustomError::InvalidSignature)?;
-    offset += 64;
-    
-    // Read message_data_offset
-    if offset + 2 > ix.data.len() {
-        return Ok(None);
-    }
-    let message_data_offset = u16::from_le_bytes([ix.data[offset], ix.data[offset + 1]]) as usize;
-    offset += 2;
-    
-    // Read message length
-    if offset + 2 > ix.data.len() {
-        return Ok(None);
-    }
-    let message_len = u16::from_le_bytes([ix.data[offset], ix.data[offset + 1]]) as usize;
-    offset += 2;
-    
-    // Verify message data offset points to the correct location
-    if message_data_offset != offset {
-        return Ok(None);
-    }
-    
-    // Read and verify the message
-    if offset + message_len > ix.data.len() {
-        return Ok(None);
-    }
-    let signed_message = &ix.data[offset..offset + message_len];
-    
-    // Verify the message matches what we expect
+
+    // Extract message and verify it
+    let signed_message = &ix.data[message_data_offset..message_data_offset.saturating_add(message_data_size)];
     if signed_message != expected_message {
-        return Err(CustomError::InvalidMessage.into());
+        return Err(error!(CustomError::InvalidMessage));
     }
-    
-    // If we reach here, the ed25519 instruction was properly formatted and 
-    // the message matches. The Solana runtime has already verified the signature
-    // is valid before this instruction could execute.
+
+    // Extract public key
+    let pubkey_bytes: [u8; 32] = ix.data[public_key_offset..public_key_offset.saturating_add(32)].try_into()
+        .map_err(|_| error!(CustomError::InvalidSignature))?;
+    let pubkey = Pubkey::new_from_array(pubkey_bytes);
+
+    // The Solana runtime has already verified the signature against the public key and message.
+    // If we've reached here and the message matches our expected message, we can trust it.
     Ok(Some(pubkey))
 }
 

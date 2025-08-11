@@ -19,14 +19,15 @@ if (!fs.existsSync(ORACLE_KEYS_DIR)) {
 }
 
 function loadOrCreateKeypair(filePath: string, name: string): Keypair {
-  try {
-    if (fs.existsSync(filePath)) {
+  if (fs.existsSync(filePath)) {
+    try {
       const secretKey = JSON.parse(fs.readFileSync(filePath, "utf8"))
       console.log(`Loaded existing ${name} from ${filePath}`)
       return Keypair.fromSecretKey(new Uint8Array(secretKey))
+    } catch (error) {
+      console.error(`Error: Failed to load or parse keypair from ${filePath}. Please check the file content or remove it to generate a new one.`, error)
+      throw error;
     }
-  } catch (error) {
-    console.log(`Could not load ${name} from ${filePath}, generating new one`)
   }
   
   const keypair = Keypair.generate()
