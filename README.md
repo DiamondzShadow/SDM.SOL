@@ -1,9 +1,10 @@
-# Solana SDM Token - Complete Anchor Project
+# Solana SDM Token - Full-Stack Web3 Application
 
-A comprehensive Solana token with advanced mint controller functionality, multisig oracle validation, and CCIP integration.
+A comprehensive Solana token project with advanced mint controller functionality, multisig oracle validation, CCIP integration, and a modern Next.js web frontend for token management.
 
 ## Features
 
+### Solana Program Features
 - ✅ **Secure Multisig Minting**: Oracle-controlled token minting with configurable quorum
 - ✅ **Supply Cap Enforcement**: Maximum supply of 5 billion tokens
 - ✅ **Initial Mint**: 4 billion tokens minted to treasury on initialization
@@ -12,25 +13,37 @@ A comprehensive Solana token with advanced mint controller functionality, multis
 - ✅ **Event Emission**: Comprehensive logging for all mint operations
 - ✅ **Admin Controls**: Update oracle signers and admin permissions
 
+### Web Frontend Features
+- ✅ **Modern React UI**: Built with Next.js 14 and React 19
+- ✅ **Beautiful Design System**: Radix UI components with Tailwind CSS
+- ✅ **Dark/Light Theme**: Next-themes integration
+- ✅ **Responsive Design**: Mobile-first responsive layout
+- ✅ **TypeScript Support**: Full type safety throughout
+- ✅ **Component Library**: Comprehensive shadcn/ui component system
+
 ## Project Structure
 
 \`\`\`
 solana-sdm/
-├── Anchor.toml
-├── Cargo.toml
-├── programs/
+├── Anchor.toml                  # Anchor workspace configuration
+├── Cargo.toml                   # Rust workspace configuration
+├── package.json                 # Next.js app dependencies & scripts
+├── pnpm-lock.yaml              # Package manager lock file
+├── tsconfig.json               # TypeScript configuration
+├── DEPLOYMENT.md               # Deployment guide and security fixes
+├── programs/                   # Solana programs
 │   └── mint-controller/
 │       ├── Cargo.toml
 │       └── src/
-│           └── lib.rs
-├── tests/
+│           └── lib.rs          # Main program logic
+├── tests/                      # Anchor program tests
 │   └── mint-controller.ts
-├── app/
+├── app/                        # TypeScript client library
 │   ├── package.json
 │   └── src/
-│       ├── mint-controller.ts
-│       └── types.ts
-├── migrations/
+│       ├── mint-controller.ts  # Client SDK
+│       └── types.ts            # Type definitions
+├── migrations/                 # Deployment scripts
 │   └── deploy.ts
 └── README.md
 \`\`\`
@@ -39,7 +52,22 @@ solana-sdm/
 
 ### Prerequisites
 
+#### Required Software
+- **Node.js 18+**: Required for Next.js and frontend development
+- **pnpm**: Package manager (faster than npm)
+- **Rust**: For Solana program development
+- **Solana CLI**: For blockchain interaction
+- **Anchor CLI**: For Solana program framework
+
+#### Installation Commands
+
 \`\`\`bash
+# Install Node.js (if not already installed)
+# Download from https://nodejs.org/ or use a version manager
+
+# Install pnpm globally
+npm install -g pnpm
+
 # Install Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
@@ -49,26 +77,48 @@ sh -c "$(curl -sSfL https://release.solana.com/v1.16.0/install)"
 # Install Anchor CLI
 npm install -g @project-serum/anchor-cli
 
-# Install Node dependencies
-npm install
+# Install project dependencies
+pnpm install
 \`\`\`
 
 ### Build and Test
 
+#### Solana Program Development
+
 \`\`\`bash
-# Build the program
+# Build the Solana program
 anchor build
 
-# Run tests
+# Run Anchor tests
 anchor test
 
 # Generate program keypair
 anchor keys list
 \`\`\`
 
+#### Frontend Development
+
+\`\`\`bash
+# Start the Next.js development server
+pnpm dev
+
+# Build the frontend for production
+pnpm build
+
+# Start the production server
+pnpm start
+
+# Run linting
+pnpm lint
+\`\`\`
+
+The frontend will be available at \`http://localhost:3000\` when running in development mode.
+
 ### Deploy
 
-#### Devnet Deployment
+#### Solana Program Deployment
+
+**Devnet Deployment**
 
 \`\`\`bash
 # Configure Solana CLI for devnet
@@ -81,7 +131,7 @@ solana airdrop 2
 anchor deploy --provider.cluster devnet
 \`\`\`
 
-#### Mainnet Deployment
+**Mainnet Deployment**
 
 \`\`\`bash
 # Configure Solana CLI for mainnet
@@ -91,9 +141,50 @@ solana config set --url mainnet-beta
 anchor deploy --provider.cluster mainnet
 \`\`\`
 
-## Program Architecture
+#### Frontend Deployment
 
-### Core Components
+The Next.js frontend can be deployed to any hosting platform that supports Node.js:
+
+**Vercel (Recommended)**
+\`\`\`bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy to Vercel
+vercel
+\`\`\`
+
+**Other Platforms**
+- **Netlify**: Connect your Git repository for automatic deployments
+- **Railway**: Deploy with \`railway deploy\`
+- **DigitalOcean App Platform**: Connect your GitHub repository
+
+Make sure to set the appropriate environment variables for your Solana network configuration.
+
+## Architecture
+
+### Tech Stack
+
+**Frontend**
+- **Next.js 14**: React framework with App Router
+- **React 19**: Latest React with concurrent features
+- **TypeScript**: Full type safety
+- **Tailwind CSS**: Utility-first CSS framework
+- **Radix UI**: Accessible component primitives
+- **shadcn/ui**: Beautiful component library
+- **Lucide React**: Icon library
+
+**Blockchain**
+- **Solana**: High-performance blockchain
+- **Anchor**: Solana development framework
+- **Rust**: Systems programming language
+
+**Development Tools**
+- **pnpm**: Fast package manager
+- **ESLint**: Code linting
+- **PostCSS**: CSS processing
+
+### Program Components
 
 1. **Config Account**: Stores program configuration including admin, oracle signers, and quorum settings
 2. **Mint Controller**: Manages token minting with multisig validation
@@ -132,7 +223,24 @@ The program includes hooks for Chainlink's Cross-Chain Interoperability Protocol
 4. Configure cross-chain token pools
 5. Test bridging functionality
 
-## Client Usage
+## Usage
+
+### Frontend Development
+
+Start the development server:
+\`\`\`bash
+pnpm dev
+\`\`\`
+
+Visit \`http://localhost:3000\` to access the web interface for:
+- Token management dashboard
+- Mint controller operations
+- Oracle configuration
+- CCIP integration tools
+
+### Client Library Usage
+
+The project includes a TypeScript client library in the \`app/\` directory:
 
 \`\`\`typescript
 import { SDMMintController } from './app/src/mint-controller';
@@ -156,7 +264,16 @@ await controller.mintInitialSupply(
 );
 \`\`\`
 
+### Building the Client Library
+
+\`\`\`bash
+cd app
+pnpm build
+\`\`\`
+
 ## Testing
+
+### Anchor Program Tests
 
 The test suite covers:
 - Program initialization
@@ -165,9 +282,24 @@ The test suite covers:
 - Oracle signature verification
 - Error conditions and edge cases
 
-Run tests with:
+Run Anchor tests:
 \`\`\`bash
 anchor test
+\`\`\`
+
+### Client Library Tests
+
+Test the TypeScript client library:
+\`\`\`bash
+cd app
+pnpm test
+\`\`\`
+
+### Frontend Testing
+
+Run frontend linting:
+\`\`\`bash
+pnpm lint
 \`\`\`
 
 ## Contributing
