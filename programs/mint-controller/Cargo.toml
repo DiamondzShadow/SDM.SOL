@@ -1,0 +1,23 @@
+[package]
+name = "mint-controller"
+version = "0.1.0"
+description = "SDM Token Mint Controller with CCIP Integration"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "mint_controller"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.29.0"
+anchor-spl = "0.29.0"
+solana-program = "~1.16.0"
+sha2 = "0.10"
+ed25519-dalek = { version = "1.0.1", features = ["rand"] }

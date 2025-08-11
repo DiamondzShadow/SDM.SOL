@@ -1,0 +1,23 @@
+{
+  "name": "sdm-mint-controller-client",
+  "version": "1.0.0",
+  "description": "SDM Token Mint Controller Client",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "mocha -t 1000000 tests/**/*.ts"
+  },
+  "dependencies": {
+    "@project-serum/anchor": "^0.29.0",
+    "@solana/web3.js": "^1.78.0",
+    "@solana/spl-token": "^0.3.8",
+    "@noble/ed25519": "^1.7.3"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1"
+  }
+}
