@@ -2,14 +2,17 @@
 seeds = false
 skip-lint = false
 
+[toolchain]
+anchor_version = "0.29.0"
+
 [programs.localnet]
-mint_controller = "SDMCTRx11111111111111111111111111111111111"
+mint_controller = "D1am1NdzShadowzMintContro11er111111111111111"
 
 [programs.devnet]
-mint_controller = "SDMCTRx11111111111111111111111111111111111"
+mint_controller = "D1am1NdzShadowzMintContro11er111111111111111"
 
 [programs.mainnet]
-mint_controller = "SDMCTRx11111111111111111111111111111111111"
+mint_controller = "D1am1NdzShadowzMintContro11er111111111111111"
 
 [registry]
 url = "https://api.apr.dev"

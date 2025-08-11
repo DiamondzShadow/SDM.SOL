@@ -7,7 +7,7 @@ use anchor_lang::solana_program::{
 use anchor_spl::token::{self, Mint, Token, TokenAccount, MintTo};
 use sha2::{Digest, Sha256};
 
-declare_id!("SDMCTRx11111111111111111111111111111111111");
+declare_id!("D1am1NdzShadowzMintContro11er111111111111111");
 
 const PDA_SEED: &[u8] = b"sdm_mint_ctrl";
 const MAX_SUPPLY: u64 = 5_000_000_000 * 1_000_000; // 5B tokens with 6 decimals
