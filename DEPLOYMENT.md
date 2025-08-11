@@ -7,16 +7,23 @@ This guide explains how to deploy the SDM (Solana Decentralized Mint) Controller
 ### ✅ Critical Security Vulnerability Fixed
 - **Issue**: Signature verification logic was insecure - only checked for presence of ed25519 instructions without validating signatures or message content
 - **Fix**: Implemented proper signature verification that:
-  - Validates ed25519 instruction format
+  - Validates ed25519 instruction format using correct offset-based parsing
   - Verifies the signed message matches expected mint parameters
   - Prevents duplicate signatures from same signer
   - Ensures signatures were actually validated by the Solana runtime
+
+### ✅ Critical Ed25519 Parsing Vulnerability Fixed (Post-Deploy)
+- **Issue**: The ed25519 instruction parsing assumed a fixed data layout instead of using proper offsets from the instruction header
+- **Risk**: Could allow specially crafted instructions to bypass signature verification
+- **Fix**: Corrected implementation to properly read offset values and use them to locate public key, signature, and message data
 
 ### ✅ Deployment Script Issues Fixed
 - **Issue**: Oracle keys were generated dynamically on each run
 - **Fix**: Implemented persistent oracle key management with file-based storage
 - **Issue**: Unsafe type casting of provider wallet
 - **Fix**: Proper type checking and error handling for wallet access
+- **Issue**: Keypair loading could silently overwrite existing keys on file corruption
+- **Fix**: Improved error handling to fail fast and alert users to corrupted keypair files
 
 ### ✅ Build Artifacts Removed
 - **Issue**: target/ directory was committed to git
