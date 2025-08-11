@@ -10,8 +10,8 @@ use sha2::{Digest, Sha256};
 declare_id!("SDMCTRx11111111111111111111111111111111111");
 
 const PDA_SEED: &[u8] = b"sdm_mint_ctrl";
-const MAX_SUPPLY: u64 = 5_000_000_000 * 1_000_000; // 5B tokens with 6 decimals
-const INITIAL_MINT: u64 = 4_000_000_000 * 1_000_000; // 4B tokens with 6 decimals
+const MAX_SUPPLY: u64 = 5_000_000_000 * 1_000_000_000; // 5B tokens with 9 decimals
+const INITIAL_MINT: u64 = 4_000_000_000 * 1_000_000_000; // 4B tokens with 9 decimals
 
 #[program]
 pub mod mint_controller {
@@ -85,6 +85,9 @@ pub mod mint_controller {
         let new_total = config.total_minted.checked_add(amount).ok_or(CustomError::Overflow)?;
         require!(new_total <= MAX_SUPPLY, CustomError::ExceedsMaxSupply);
         
+        // Create the message that should have been signed
+        let message = create_mint_message(amount, recipient, nonce, &reason);
+        
         // Verify ed25519 signatures were validated in previous instructions
         let instructions_sysvar = &ctx.accounts.instructions_sysvar;
         let current_index = instructions_sysvar.load_current_index_checked()?;
@@ -95,10 +98,13 @@ pub mod mint_controller {
         for i in 0..current_index {
             let ix = instructions_sysvar.load_instruction_at_checked(i as usize, &ctx.program_id)?;
             if ix.program_id == ed25519_program::ID {
-                // Parse ed25519 instruction to extract signer pubkey
-                if let Some(signer_pubkey) = parse_ed25519_instruction(&ix) {
+                // Parse and verify ed25519 instruction
+                if let Some(signer_pubkey) = parse_and_verify_ed25519_instruction(&ix, &message)? {
                     if config.oracle_signers.contains(&signer_pubkey) {
-                        verified_signers.push(signer_pubkey);
+                        // Prevent duplicate signatures from the same signer
+                        if !verified_signers.contains(&signer_pubkey) {
+                            verified_signers.push(signer_pubkey);
+                        }
                     }
                 }
             }
@@ -208,14 +214,88 @@ pub mod mint_controller {
 }
 
 // Helper function to parse ed25519 instruction
-fn parse_ed25519_instruction(ix: &Instruction) -> Option<Pubkey> {
-    if ix.data.len() < 32 {
-        return None;
+fn create_mint_message(amount: u64, recipient: Pubkey, nonce: u64, reason: &str) -> Vec<u8> {
+    let mut message = Vec::new();
+    message.extend_from_slice(b"SDMINT");  // Protocol identifier
+    message.extend_from_slice(&amount.to_le_bytes());
+    message.extend_from_slice(&recipient.to_bytes());
+    message.extend_from_slice(&nonce.to_le_bytes());
+    message.extend_from_slice(reason.as_bytes());
+    message
+}
+
+fn parse_and_verify_ed25519_instruction(ix: &Instruction, expected_message: &[u8]) -> Result<Option<Pubkey>> {
+    // Ed25519 instruction format validation
+    if ix.data.len() < 112 {  // Minimum size: 1 + 1 + 2 + 32 + 64 + 2 + message_len
+        return Ok(None);
     }
     
-    // Ed25519 instruction format: first 32 bytes are the public key
-    let pubkey_bytes: [u8; 32] = ix.data[0..32].try_into().ok()?;
-    Some(Pubkey::new_from_array(pubkey_bytes))
+    let mut offset = 0;
+    
+    // Read num_signatures (should be 1)
+    let num_signatures = ix.data[offset];
+    offset += 1;
+    if num_signatures != 1 {
+        return Ok(None);
+    }
+    
+    // Read padding
+    let _padding = ix.data[offset];
+    offset += 1;
+    
+    // Read signature_offset (should point to after the header)
+    let signature_offset = u16::from_le_bytes([ix.data[offset], ix.data[offset + 1]]) as usize;
+    offset += 2;
+    
+    // Read public key (32 bytes)
+    if offset + 32 > ix.data.len() {
+        return Ok(None);
+    }
+    let pubkey_bytes: [u8; 32] = ix.data[offset..offset + 32].try_into().map_err(|_| CustomError::InvalidSignature)?;
+    let pubkey = Pubkey::new_from_array(pubkey_bytes);
+    offset += 32;
+    
+    // Read signature (64 bytes)
+    if offset + 64 > ix.data.len() {
+        return Ok(None);
+    }
+    let _signature: [u8; 64] = ix.data[offset..offset + 64].try_into().map_err(|_| CustomError::InvalidSignature)?;
+    offset += 64;
+    
+    // Read message_data_offset
+    if offset + 2 > ix.data.len() {
+        return Ok(None);
+    }
+    let message_data_offset = u16::from_le_bytes([ix.data[offset], ix.data[offset + 1]]) as usize;
+    offset += 2;
+    
+    // Read message length
+    if offset + 2 > ix.data.len() {
+        return Ok(None);
+    }
+    let message_len = u16::from_le_bytes([ix.data[offset], ix.data[offset + 1]]) as usize;
+    offset += 2;
+    
+    // Verify message data offset points to the correct location
+    if message_data_offset != offset {
+        return Ok(None);
+    }
+    
+    // Read and verify the message
+    if offset + message_len > ix.data.len() {
+        return Ok(None);
+    }
+    let signed_message = &ix.data[offset..offset + message_len];
+    
+    // Verify the message matches what we expect
+    if signed_message != expected_message {
+        return Err(CustomError::InvalidMessage.into());
+    }
+    
+    // If we reach here, the ed25519 instruction was properly formatted and 
+    // the message matches. The Solana runtime has already verified the signature
+    // is valid before this instruction could execute.
+    Ok(Some(pubkey))
 }
 
 #[account]
@@ -403,4 +483,6 @@ pub enum CustomError {
     Overflow,
     #[msg("Initial mint already completed")]
     InitialMintAlreadyDone,
+    #[msg("Invalid message in signature")]
+    InvalidMessage,
 }
