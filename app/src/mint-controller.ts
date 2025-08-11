@@ -105,7 +105,7 @@ export class SDMMintController {
 export async function createSDMToken(
   provider: anchor.AnchorProvider,
   mintAuthority: PublicKey,
-  decimals = 6,
+  decimals = 9,
 ): Promise<PublicKey> {
   return await createMint(
     provider.connection,

@@ -10,8 +10,8 @@ use sha2::{Digest, Sha256};
 declare_id!("SDMCTRx11111111111111111111111111111111111");
 
 const PDA_SEED: &[u8] = b"sdm_mint_ctrl";
-const MAX_SUPPLY: u64 = 5_000_000_000 * 1_000_000; // 5B tokens with 6 decimals
-const INITIAL_MINT: u64 = 4_000_000_000 * 1_000_000; // 4B tokens with 6 decimals
+const MAX_SUPPLY: u64 = 5_000_000_000 * 1_000_000_000; // 5B tokens with 9 decimals
+const INITIAL_MINT: u64 = 4_000_000_000 * 1_000_000_000; // 4B tokens with 9 decimals
 
 #[program]
 pub mod mint_controller {

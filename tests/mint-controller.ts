@@ -33,7 +33,7 @@ describe("SDM Mint Controller", () => {
       program.programId,
     )
 
-    mint = await createSDMToken(provider, configPDA)
+    mint = await createSDMToken(provider, configPDA, 9)
 
     await controller.initialize(
       admin.publicKey,
